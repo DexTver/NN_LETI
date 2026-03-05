@@ -1,8 +1,6 @@
 import os
 import json
 import datetime
-import tkinter as tk
-from tkinter import filedialog
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,10 +24,6 @@ MODELS_DIR = 'models'
 METRICS_DIR = 'metrics'
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(METRICS_DIR, exist_ok=True)
-
-# Скрыть главное окно tkinter
-root = tk.Tk()
-root.withdraw()
 
 
 # === МОДЕЛИ (без изменений) ===
