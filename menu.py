@@ -29,6 +29,16 @@ def get_epochs():
             print('Некорректный ввод.')
 
 
+def model_info(base):
+    metric_path = os.path.join(METRICS_DIR, base.strip('.keras') + '_metrics.txt')
+    if os.path.exists(metric_path):
+        with (open(metric_path, 'r', encoding='utf-8') as f):
+            metrics = list(map(lambda x: x.strip('\n'), f.readlines()))
+            print(metrics[1])
+            print(metrics[4] + ' | ' + metrics[5])
+            print(metrics[2] + ' | ' + metrics[3])
+
+
 def train_model(model_name):
     if model_name == 'MyCNN':
         model = create_my_model(INPUT_SHAPE, NUM_CLASSES)
@@ -84,8 +94,8 @@ def train_model(model_name):
         f.write(f'Test accuracy: {test_acc:.4f}\n')
         final_train_acc = history.history['accuracy'][-1]
         final_val_acc = history.history['val_accuracy'][-1]
-        f.write(f'Final train accuracy: {final_train_acc:.4f}\n')
-        f.write(f'Final val accuracy: {final_val_acc:.4f}\n')
+        f.write(f'Train accuracy: {final_train_acc:.4f}\n')
+        f.write(f'Val accuracy: {final_val_acc:.4f}\n')
 
     plt.figure(figsize=(12, 4))
 
@@ -143,16 +153,16 @@ def predict_with_model():
     try:
         model_path = os.path.join(MODELS_DIR, model_files[idx])
         model = tf.keras.models.load_model(model_path)
-        print('Модель успешно загружена.')
+        print(f'Модель {model_files[idx].strip('.keras')} успешно загружена.')
     except Exception as e:
         print(f'Ошибка загрузки модели: {e}')
         input("Нажмите Enter, чтобы продолжить...")
         return
 
-    # Здесь нужно отобразить параметры модели
-
     base = os.path.basename(model_path)
     model_name = base.split('_')[0]
+
+    model_info(base)
 
     timestamp_part = '_'.join(base.split('_')[1:]).replace('.keras', '')
     mapping_filename = f'{model_name}_{timestamp_part}_classes.json'
@@ -172,8 +182,9 @@ def predict_with_model():
     while True:
         if inf:
             print('=' * 40 + '\n' + ' ' * 11 + 'АНАЛИЗ ИЗОБРАЖЕНИЯ' + ' ' * 11 + '\n' + '=' * 40)
+            print(f'Модель: {base.split('_')[0]}')
+            model_info(base)
             print('(Для выхода в главное меню введите "0" вместо пути)')
-            # Имя модели и какие параметры
 
             show_files = input('Показать список изображений в текущей папке? (y/n): ').strip().lower()
             if show_files == 'y':
