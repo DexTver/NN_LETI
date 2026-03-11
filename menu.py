@@ -153,7 +153,7 @@ def predict_with_model():
     try:
         model_path = os.path.join(MODELS_DIR, model_files[idx])
         model = tf.keras.models.load_model(model_path)
-        print(f'Модель {model_files[idx].strip('.keras')} успешно загружена.')
+        print('Модель' + model_files[idx].strip('.keras') + 'успешно загружена.')
     except Exception as e:
         print(f'Ошибка загрузки модели: {e}')
         input("Нажмите Enter, чтобы продолжить...")
@@ -182,7 +182,7 @@ def predict_with_model():
     while True:
         if inf:
             print('=' * 40 + '\n' + ' ' * 11 + 'АНАЛИЗ ИЗОБРАЖЕНИЯ' + ' ' * 11 + '\n' + '=' * 40)
-            print(f'Модель: {base.split('_')[0]}')
+            print('Модель:' + base.split('_')[0])
             model_info(base)
             print('(Для выхода в главное меню введите "0" вместо пути)')
 
