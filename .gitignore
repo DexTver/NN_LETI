@@ -1,6 +1,5 @@
 .idea
 .venv
 dataset
-dataset(not splited)
 metrics
 models

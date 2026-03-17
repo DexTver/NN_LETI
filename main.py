@@ -1,16 +1,18 @@
+import os
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import VGG16, VGG19
-
+from sklearn.model_selection import train_test_split
+import pandas as pd
 
 BATCH_SIZE = 32
 IMG_SIZE = 224
 INPUT_SHAPE = (IMG_SIZE, IMG_SIZE, 3)
 NUM_CLASSES = 2
-TRAIN_DIR = 'dataset/train'
-VALID_DIR = 'dataset/valid'
-TEST_DIR = 'dataset/test'
+DATA_DIR = 'dataset'
+VALID_DIR = os.path.join(DATA_DIR, 'valid')
+IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.bmp', '.tiff')
 
 
 def create_my_model(input_shape, num_classes):
@@ -25,6 +27,7 @@ def create_my_model(input_shape, num_classes):
 
     model.add(layers.Flatten())
     model.add(layers.Dense(64, activation='relu'))
+    model.add(layers.Dropout(0.5))
     model.add(layers.Dense(num_classes))
 
     return model
@@ -94,6 +97,38 @@ def get_data_generators(model_name):
         preproc = None
         rescale = 1. / 255
 
+    all_files = []
+    for f in os.listdir(DATA_DIR):
+        full_path = os.path.join(DATA_DIR, f)
+        if os.path.isfile(full_path) and f.lower().endswith(IMAGE_EXTENSIONS):
+            all_files.append(f)
+
+    bird_files = [f for f in all_files if 'bird' in f.lower()]
+    drone_files = [f for f in all_files if 'drone' in f.lower()]
+
+    def split_class(file_list):
+        train, test = train_test_split(file_list, test_size=0.2, random_state=42)
+        return train, test
+
+    bird_train, bird_test = split_class(bird_files)
+    drone_train, drone_test = split_class(drone_files)
+
+    train_files = bird_train + drone_train
+    train_labels = ['bird'] * len(bird_train) + ['drone'] * len(drone_train)
+
+    test_files = bird_test + drone_test
+    test_labels = ['bird'] * len(bird_test) + ['drone'] * len(drone_test)
+
+    valid_files = []
+    valid_labels = []
+    for class_name, label_str in [('bird', 'bird'), ('drone', 'drone')]:
+        class_dir = os.path.join(VALID_DIR, class_name)
+        if os.path.isdir(class_dir):
+            for f in os.listdir(class_dir):
+                if f.lower().endswith(IMAGE_EXTENSIONS):
+                    valid_files.append(os.path.join('valid', class_name, f))
+                    valid_labels.append(label_str)
+
     train_datagen = ImageDataGenerator(
         rescale=rescale,
         preprocessing_function=preproc,
@@ -103,29 +138,42 @@ def get_data_generators(model_name):
         horizontal_flip=True
     )
 
-    test_datagen = ImageDataGenerator(
+    test_valid_datagen = ImageDataGenerator(
         rescale=rescale,
         preprocessing_function=preproc
     )
 
-    train_gen = train_datagen.flow_from_directory(
-        TRAIN_DIR,
+    train_df = pd.DataFrame({'filename': train_files, 'class': train_labels})
+    test_df = pd.DataFrame({'filename': test_files, 'class': test_labels})
+    valid_df = pd.DataFrame({'filename': valid_files, 'class': valid_labels})
+
+    train_gen = train_datagen.flow_from_dataframe(
+        train_df,
+        directory=DATA_DIR,
+        x_col='filename',
+        y_col='class',
         target_size=(IMG_SIZE, IMG_SIZE),
         batch_size=BATCH_SIZE,
         class_mode='sparse',
         shuffle=True
     )
 
-    valid_gen = test_datagen.flow_from_directory(
-        VALID_DIR,
+    test_gen = test_valid_datagen.flow_from_dataframe(
+        test_df,
+        directory=DATA_DIR,
+        x_col='filename',
+        y_col='class',
         target_size=(IMG_SIZE, IMG_SIZE),
         batch_size=BATCH_SIZE,
         class_mode='sparse',
         shuffle=False
     )
 
-    test_gen = test_datagen.flow_from_directory(
-        TEST_DIR,
+    valid_gen = test_valid_datagen.flow_from_dataframe(
+        valid_df,
+        directory=DATA_DIR,
+        x_col='filename',
+        y_col='class',
         target_size=(IMG_SIZE, IMG_SIZE),
         batch_size=BATCH_SIZE,
         class_mode='sparse',

@@ -1,5 +1,3 @@
-import os
-import json
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -32,7 +30,7 @@ def get_epochs():
 def model_info(base):
     metric_path = os.path.join(METRICS_DIR, base.strip('.keras') + '_metrics.txt')
     if os.path.exists(metric_path):
-        with (open(metric_path, 'r', encoding='utf-8') as f):
+        with open(metric_path, 'r', encoding='utf-8') as f:
             metrics = list(map(lambda x: x.strip('\n'), f.readlines()))
             print(metrics[1])
             print(metrics[4] + ' | ' + metrics[5])
@@ -80,12 +78,6 @@ def train_model(model_name):
     model.save(model_path)
     print(f'Модель сохранена: {model_path}')
 
-    class_indices = train_gen.class_indices
-    indices_to_class = {v: k for k, v in class_indices.items()}
-    mapping_path = os.path.join(METRICS_DIR, f'{model_name}_{timestamp}_classes.json')
-    with open(mapping_path, 'w', encoding='utf-8') as f:
-        json.dump(indices_to_class, f, indent=4, ensure_ascii=False)
-
     metrics_path = os.path.join(METRICS_DIR, f'{model_name}_{timestamp}_metrics.txt')
     with open(metrics_path, 'w', encoding='utf-8') as f:
         f.write(f'Model name: {model_name}\n')
@@ -105,7 +97,8 @@ def train_model(model_name):
     plt.title(f'{model_name} - Accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
-    plt.ylim(0, 1)
+    max_acc = max(history.history['accuracy'] + history.history['val_accuracy'])
+    plt.ylim(bottom=0, top=max(1.0, max_acc * 1.05))
     plt.legend()
     plt.grid(True, alpha=0.3)
 
@@ -115,14 +108,15 @@ def train_model(model_name):
     plt.title(f'{model_name} - Loss')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
-    plt.ylim(0, 1)
+    max_loss = max(history.history['loss'] + history.history['val_loss'])
+    plt.ylim(bottom=0, top=max(1.0, max_loss * 1.05))
     plt.legend()
     plt.grid(True, alpha=0.3)
 
     plt.tight_layout()
     plot_path = os.path.join(METRICS_DIR, f'{model_name}_{timestamp}_training.png')
     plt.savefig(plot_path, dpi=150)
-    plt.show()
+    plt.close()
     print(f'Графики сохранены: {plot_path}')
     input("Нажмите Enter, чтобы продолжить...")
 
@@ -153,7 +147,7 @@ def predict_with_model():
     try:
         model_path = os.path.join(MODELS_DIR, model_files[idx])
         model = tf.keras.models.load_model(model_path)
-        print('Модель' + model_files[idx].strip('.keras') + 'успешно загружена.')
+        print('Модель ' + model_files[idx].strip('.keras') + ' успешно загружена.')
     except Exception as e:
         print(f'Ошибка загрузки модели: {e}')
         input("Нажмите Enter, чтобы продолжить...")
@@ -164,17 +158,7 @@ def predict_with_model():
 
     model_info(base)
 
-    timestamp_part = '_'.join(base.split('_')[1:]).replace('.keras', '')
-    mapping_filename = f'{model_name}_{timestamp_part}_classes.json'
-    mapping_path = os.path.join(METRICS_DIR, mapping_filename)
-    if os.path.exists(mapping_path):
-        with open(mapping_path, 'r', encoding='utf-8') as f:
-            indices_to_class = json.load(f)
-        indices_to_class = {int(k): v for k, v in indices_to_class.items()}
-        print('Маппинг классов загружен.')
-    else:
-        indices_to_class = {0: 'класс 0', 1: 'класс 1'}
-        print('Внимание: файл с именами классов не найден, используются индексы.')
+    indices_to_class = {0: 'bird', 1: 'drone'}
 
     input("Нажмите Enter, чтобы продолжить...")
     clear_console()
@@ -182,7 +166,7 @@ def predict_with_model():
     while True:
         if inf:
             print('=' * 40 + '\n' + ' ' * 11 + 'АНАЛИЗ ИЗОБРАЖЕНИЯ' + ' ' * 11 + '\n' + '=' * 40)
-            print('Модель:' + base.split('_')[0])
+            print('Модель: ' + base.split('_')[0])
             model_info(base)
             print('(Для выхода в главное меню введите "0" вместо пути)')
 
@@ -228,7 +212,7 @@ def predict_with_model():
             class_name = indices_to_class.get(predicted_class, f'неизвестный класс {predicted_class}')
             probabilities = tf.nn.softmax(predictions[0]).numpy()
 
-            print(f'Результат: {class_name} (индекс {predicted_class})')
+            print(f'Результат: {class_name}')
             print(f'Вероятности: {probabilities}')
 
         except Exception as e:
