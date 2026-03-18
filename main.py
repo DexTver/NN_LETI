@@ -3,6 +3,9 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import VGG16, VGG19
+from tensorflow.keras.layers import Add, GlobalAveragePooling2D, Lambda, BatchNormalization, Activation, Input
+from tensorflow.keras.initializers import HeNormal
+from tensorflow.keras import Model
 from sklearn.model_selection import train_test_split
 import pandas as pd
 
@@ -86,12 +89,57 @@ def create_vgg19(input_shape, num_classes, trainable_base=False):
     return model
 
 
+def residual_block(x, number_of_filters, match_filter_size=False, initializer=HeNormal()):
+    x_skip = x
+    if match_filter_size:
+        x = layers.Conv2D(number_of_filters, (3, 3), strides=(2, 2),
+                          kernel_initializer=initializer, padding='same')(x_skip)
+    else:
+        x = layers.Conv2D(number_of_filters, (3, 3), strides=(1, 1),
+                          kernel_initializer=initializer, padding='same')(x_skip)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = layers.Conv2D(number_of_filters, (3, 3), kernel_initializer=initializer, padding='same')(x)
+    x = BatchNormalization()(x)
+    if match_filter_size:
+        x_skip = Lambda(lambda z: tf.pad(z[:, ::2, ::2, :],
+                                         [[0, 0], [0, 0], [0, 0],
+                                          [number_of_filters // 4, number_of_filters // 4]]))(x_skip)
+    x = Add()([x, x_skip])
+    x = Activation('relu')(x)
+
+    return x
+
+
+def create_resnet(input_shape, num_classes, n=3):
+    initializer = HeNormal()
+    init_filters = 16
+    inputs = Input(shape=input_shape)
+    x = layers.Conv2D(init_filters, (3, 3), strides=(1, 1), kernel_initializer=initializer, padding='same')(inputs)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    filter_size = init_filters
+    for layer_group in range(3):
+        for block in range(n):
+            if layer_group > 0 and block == 0:
+                filter_size *= 2
+                x = residual_block(x, filter_size, match_filter_size=True, initializer=initializer)
+            else:
+                x = residual_block(x, filter_size, initializer=initializer)
+    x = GlobalAveragePooling2D()(x)
+    x = layers.Dense(num_classes, kernel_initializer=initializer)(x)
+    model = Model(inputs=inputs, outputs=x, name=f'ResNet-{6 * n + 2}')
+    return model
+
+
 def get_data_generators(model_name):
-    if model_name in ['VGG16', 'VGG19']:
+    if model_name in ['VGG16', 'VGG19', 'ResNet']:
         if model_name == 'VGG16':
             preproc = tf.keras.applications.vgg16.preprocess_input
-        else:
+        elif model_name == 'VGG19':
             preproc = tf.keras.applications.vgg19.preprocess_input
+        else:
+            preproc = tf.keras.applications.resnet50.preprocess_input
         rescale = None
     else:
         preproc = None

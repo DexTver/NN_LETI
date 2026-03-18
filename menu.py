@@ -46,6 +46,8 @@ def train_model(model_name):
         model = create_vgg16(INPUT_SHAPE, NUM_CLASSES, trainable_base=False)
     elif model_name == 'VGG19':
         model = create_vgg19(INPUT_SHAPE, NUM_CLASSES, trainable_base=False)
+    elif model_name == 'ResNet':
+        model = create_resnet(INPUT_SHAPE, NUM_CLASSES, n=3)
     else:
         print('Неизвестная модель')
         return
@@ -199,11 +201,13 @@ def predict_with_model():
             img_array = img_to_array(img)
             img_array = np.expand_dims(img_array, axis=0)
 
-            if model_name in ['VGG16', 'VGG19']:
+            if model_name in ['VGG16', 'VGG19', 'ResNet']:
                 if model_name == 'VGG16':
                     img_array = tf.keras.applications.vgg16.preprocess_input(img_array)
-                else:
+                elif model_name == 'VGG19':
                     img_array = tf.keras.applications.vgg19.preprocess_input(img_array)
+                elif model_name == 'ResNet':
+                    img_array = tf.keras.applications.resnet50.preprocess_input(img_array)
             else:
                 img_array = img_array / 255.0
 
@@ -226,6 +230,7 @@ def submenu_train():
         print('2. AlexNet')
         print('3. VGG16')
         print('4. VGG19')
+        print('5. ResNet')
         print('0. Назад')
         choice = input('Выберите модель: ').strip()
 
@@ -237,6 +242,8 @@ def submenu_train():
             train_model('VGG16')
         elif choice == '4':
             train_model('VGG19')
+        elif choice == '5':
+            train_model('ResNet')
         elif choice == '0':
             return
         else:
