@@ -1,0 +1,6 @@
+Model name: VGG19
+Epochs: 20
+Test loss: 0.0108
+Test accuracy: 0.9993
+Train accuracy: 0.9986
+Val accuracy: 1.0000

@@ -139,7 +139,12 @@ def predict_with_model():
         choice = input('Выберите номер модели: ').strip()
         if choice == '0':
             return
-        idx = int(choice) - 1
+        try:
+            idx = int(choice) - 1
+        except ValueError:
+            clear_console()
+            print('Некорректный ввод.')
+            continue
         if idx < 0 or idx >= len(model_files):
             clear_console()
             print('Некорректный ввод.')

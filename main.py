@@ -51,9 +51,9 @@ def create_alexnet(input_shape, num_classes):
 
     model.add(layers.Flatten())
     model.add(layers.Dense(4096, activation='relu'))
-    model.add(layers.Dropout(0.5))
+    model.add(layers.Dropout(0.3))
     model.add(layers.Dense(4096, activation='relu'))
-    model.add(layers.Dropout(0.5))
+    model.add(layers.Dropout(0.3))
     model.add(layers.Dense(num_classes))
 
     return model

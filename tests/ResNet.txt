@@ -1,0 +1,6 @@
+Model name: ResNet
+Epochs: 20
+Test loss: 0.0204
+Test accuracy: 0.9935
+Train accuracy: 0.9976
+Val accuracy: 1.0000

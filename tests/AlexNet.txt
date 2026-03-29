@@ -1,0 +1,6 @@
+Model name: AlexNet
+Epochs: 20
+Test loss: 0.0082
+Test accuracy: 0.9967
+Train accuracy: 0.9881
+Val accuracy: 1.0000
