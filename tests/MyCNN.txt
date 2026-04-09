@@ -1,6 +1,0 @@
-Model name: MyCNN
-Epochs: 20
-Test loss: 0.0171
-Test accuracy: 0.9945
-Train accuracy: 0.9947
-Val accuracy: 1.0000

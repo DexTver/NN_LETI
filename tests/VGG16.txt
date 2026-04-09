@@ -1,6 +1,0 @@
-Model name: VGG16
-Epochs: 20
-Test loss: 0.0247
-Test accuracy: 0.9993
-Train accuracy: 0.9987
-Val accuracy: 1.0000
